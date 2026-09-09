@@ -54,7 +54,7 @@ export default function Page() {
       <main className="flex w-full max-w-lg flex-1 flex-col items-center justify-center px-4 py-10">
         <section className="flex w-full flex-col items-center">
           <Image
-            src="https://bvumrcykwytgsmgylbun.supabase.co/storage/v1/object/public/task-tb/tasl_logo.png"
+            src="https://bvumrcykwytgsmgylbun.supabase.co/storage/v1/object/public/task_bk/tasl_logo.png"
             alt="Task App"
             width={150}
             height={100}

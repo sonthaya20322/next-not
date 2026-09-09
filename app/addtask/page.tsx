@@ -5,8 +5,20 @@ import AppName from '@/components/AppName'
 import Footer from '@/components/footer'
 import { useState } from 'react'
 import Swal from 'sweetalert2'
+import { supabase } from '@/lib/supabaseClient'
+import { useRouter } from 'next/navigation'
+
+const STORAGE_BUCKET = 'task_bk'
+const TASK_TABLE = 'task_tb'
 
 export default function Page() {
+
+
+
+    const router = useRouter();
+
+
+
     // state สำหรับเก็บค่าหัวข้องาน
     const [taskTitle, setTaskTitle] = useState('');
     const [detail, setDetail] = useState('');
@@ -37,7 +49,7 @@ export default function Page() {
     }
 
     // function สำหรับบันทึกข้อมูลเพิ่มเติม
-    const handleSaveData = () => {
+    const handleSaveData = async () => {
         // Validate UI
         if (taskTitle === '' || detail === '' || !imageFile) {
             Swal.fire({
@@ -50,10 +62,58 @@ export default function Page() {
             return;
         }
         // Uplode to Supabase Storage and get Image URL from Bucket
-        
+        // 1.1 ต้องมีการเปลี่ยนชื่อไฟล์เพื่อป้องกันการซ้ำกันของชื่อไฟล์
+        const safeFileName = imageFile.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+        const newFileName = `dtisaujija_${Date.now()}_${safeFileName}`;
+        // 1.2 สร้าง URL สำหรับอัพโหลดไฟล์
+        const { error: uploadError } = await supabase.storage.from(STORAGE_BUCKET).upload(newFileName, imageFile);
+
+        if (uploadError) {
+            Swal.fire({
+                title: "เกิดข้อผิดพลาด!",
+                icon: "error",
+                text: `ไม่สามารถอัพโหลดรูปภาพได้: ${uploadError.message}`,
+                confirmButtonText: "ตกลง",
+            });
+
+            return;
+        }
+
+        // เอาที่อยู่ของรูปมาใส่ในตัวแปร imageUrl (get image url)
+        const { data } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(newFileName);
+        const imageUrl = data.publicUrl;
 
 
         // Save to Supabase Database
+        const { error: saveError } = await supabase.from(TASK_TABLE).insert({
+            title: taskTitle,
+            detail,
+            is_completed: isCompleted,
+            image_url: imageUrl
+        });
+
+        if (saveError) {
+            Swal.fire({
+                title: "เกิดข้อผิดพลาด!",
+                icon: "error",
+                text: `ไม่สามารถบันทึกข้อมูลได้: ${saveError.message}`,
+                confirmButtonText: "ตกลง",
+            });
+
+            return;
+        }
+
+        handleResetData();
+
+        await Swal.fire({
+            title: "สําเร็จ!",
+            icon: "success",
+            text: "ข้อมูลถูกบันทึกเรียบร้อยแล้ว",
+            confirmButtonText: "ตกลง",
+        });
+
+        router.back()
+
     }
 
 
