@@ -3,7 +3,6 @@
 import Image from 'next/image'
 import AppName from '@/components/AppName'
 import Footer from '@/components/footer'
-import Link from 'next/link'
 import { useState } from 'react'
 import Swal from 'sweetalert2'
 
@@ -75,8 +74,8 @@ export default function Page() {
                             className="mb-8"
                         />
 
-                        <div className="w-200 mt-10 mx-auto border border-gray-400 rounded-x1 px-20 py-10">
-                            <h1 className="text-center text-2x1 font-bold">
+                        <div className="mt-2 w-full max-w-lg rounded-xl border border-gray-300 px-5 py-8 shadow-sm sm:px-8">
+                            <h1 className="text-center text-2xl font-bold">
                                 เพิ่มข้อมูลงาน
                             </h1>
 
@@ -89,7 +88,7 @@ export default function Page() {
                                 onChange={(e) => setTaskTitle(e.target.value)}
                                 type="text"
                                 placeholder="หัวข้องาน"
-                                className="w-full p-2 border border-gray-300 rounded bg-amber-40"
+                                className="w-full rounded-md border border-gray-300 bg-amber-50 p-2"
                             />
 
                             <h3 className="mt-5 mb-2">
@@ -100,7 +99,7 @@ export default function Page() {
                                 value={detail}
                                 onChange={(e) => setDetail(e.target.value)}
                                 rows={5}
-                                className="w-full border rouded-mb p-2 bg-amber-40"
+                                className="w-full resize-y rounded-md border border-gray-300 bg-amber-50 p-2"
                                 placeholder="รายละเอียดงาน"
                             ></textarea>
 
@@ -110,8 +109,7 @@ export default function Page() {
 
                             <input type="file" id="selectImageFile" onChange={handleImageChange}
                                 className="hidden" accept="image/*" />
-                            <label htmlFor="selectImageFile" className="border rounded-md p-2 w-full bg-amber-40 hover:cursor-pointer
-                                     hover:bg-blue-500 transition-colors duration-300">
+                            <label htmlFor="selectImageFile" className="block w-full rounded-md border border-gray-300 bg-amber-50 p-2 text-center transition-colors duration-300 hover:cursor-pointer hover:bg-blue-500 hover:text-white">
                                 เลือกรูป
                             </label>
                             {/* image preview */}
@@ -126,7 +124,7 @@ export default function Page() {
                             </h3>
                             <select value={isCompleted == true ? '1' : '0'}
                                 onChange={(e) => setIsCompleted(e.target.value == '1')}
-                                className="border rounded-md p-2 w-full bg-amber-40">
+                                className="w-full rounded-md border border-gray-300 bg-amber-50 p-2">
                                 <option value="1">เสร็จสิ้น</option>
                                 <option value="0" selected>
                                     รอดำเนินการ
@@ -134,20 +132,20 @@ export default function Page() {
                             </select>
 
                             <button onClick={handleSaveData}
-                                className="mt-5 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 transition-colors duration-300">
+                                className="mt-5 rounded-md bg-blue-500 px-4 py-2 text-white transition-colors duration-300 hover:bg-blue-600">
                                 บันทึกข้อมูลเพิ่มเติม
                             </button>
 
 
                             <button onClick={handleResetData}
-                                className="mt-5 bg-red-500 text-white p-2 rounded-md hover:bg-red-600 transition-colors duration-300">
+                                className="mt-5 rounded-md bg-red-500 px-4 py-2 text-white transition-colors duration-300 hover:bg-red-600">
                                 รีเซ็ตข้อมูล
                             </button>
 
                         </div>
 
-                        <div>
-                            Link to <a href="/hometask" className="text-blue-500 hover:underline">Home Task</a>
+                        <div className="mt-5 w-full text-center text-sm text-gray-600">
+                            Link to <a href="/hometask" className="font-medium text-blue-600 transition-colors hover:text-blue-800 hover:underline">Home Task</a>
                         </div>
 
                     </section>
