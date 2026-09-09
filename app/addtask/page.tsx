@@ -126,7 +126,7 @@ export default function Page() {
                                 onChange={(e) => setIsCompleted(e.target.value == '1')}
                                 className="w-full rounded-md border border-gray-300 bg-amber-50 p-2">
                                 <option value="1">เสร็จสิ้น</option>
-                                <option value="0" selected>
+                                <option value="0">
                                     รอดำเนินการ
                                 </option>
                             </select>
