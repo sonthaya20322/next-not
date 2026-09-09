@@ -1,8 +1,95 @@
+'use client'
+
 import Image from 'next/image'
 import AppName from '@/components/AppName'
 import Footer from '@/components/footer'
+import { Suspense, useEffect, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { supabase } from '@/lib/supabaseClient'
+import Swal from 'sweetalert2'
 
-export default function Page() {
+const STORAGE_BUCKET = 'task_bk'
+
+function EditTaskPage() {
+    const router = useRouter()
+    const searchParams = useSearchParams()
+    const taskId = searchParams.get('id')
+    const [taskTitle, setTaskTitle] = useState('')
+    const [detail, setDetail] = useState('')
+    const [isCompleted, setIsCompleted] = useState(false)
+    const [imageFile, setImageFile] = useState<File | null>(null)
+    const [imagePreview, setImagePreview] = useState('')
+
+    useEffect(() => {
+        const fetchTask = async () => {
+            if (!taskId) return
+
+            const { data, error } = await supabase.from('task_tb').select('*').eq('id', taskId).single()
+            if (error) {
+                Swal.fire('เกิดข้อผิดพลาด', `ไม่สามารถโหลดข้อมูลงานได้: ${error.message}`, 'error')
+                return
+            }
+
+            setTaskTitle(data.title)
+            setDetail(data.detail)
+            setIsCompleted(data.is_completed)
+            setImagePreview(data.image_url)
+        }
+
+        fetchTask()
+    }, [taskId])
+
+    const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0]
+        if (file) {
+            setImageFile(file)
+            setImagePreview(URL.createObjectURL(file))
+        }
+    }
+
+    const handleUpdateTask = async () => {
+        if (!taskId || !taskTitle || !detail) {
+            Swal.fire('คำเตือน!', 'กรุณากรอกข้อมูลให้ครบถ้วน', 'warning')
+            return
+        }
+
+        let imageUrl = imagePreview
+        if (imageFile) {
+            const safeFileName = imageFile.name.replace(/[^a-zA-Z0-9._-]/g, '_')
+            const newFileName = `dtisaujija_${Date.now()}_${safeFileName}`
+            const { error: uploadError } = await supabase.storage.from(STORAGE_BUCKET).upload(newFileName, imageFile)
+            if (uploadError) {
+                Swal.fire('เกิดข้อผิดพลาด', `ไม่สามารถอัพโหลดรูปภาพได้: ${uploadError.message}`, 'error')
+                return
+            }
+            imageUrl = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(newFileName).data.publicUrl
+        }
+
+        const { error } = await supabase.from('task_tb').update({
+            title: taskTitle,
+            detail,
+            is_completed: isCompleted,
+            image_url: imageUrl,
+            update_at: new Date().toISOString(),
+        }).eq('id', taskId)
+
+        if (error) {
+            Swal.fire('เกิดข้อผิดพลาด', `ไม่สามารถแก้ไขข้อมูลงานได้: ${error.message}`, 'error')
+            return
+        }
+
+        await Swal.fire('สำเร็จ', 'แก้ไขข้อมูลงานเรียบร้อยแล้ว', 'success')
+        router.push('/hometask')
+    }
+
+    const handleResetData = () => {
+        setTaskTitle('')
+        setDetail('')
+        setIsCompleted(false)
+        setImageFile(null)
+        setImagePreview('')
+    }
+
     return (
         <div className="w-full">
             <div className="flex min-h-screen w-full flex-col items-center">
@@ -30,6 +117,8 @@ export default function Page() {
                             </h3>
 
                             <input
+                                value={taskTitle}
+                                onChange={(event) => setTaskTitle(event.target.value)}
                                 type="text"
                                 placeholder="หัวข้องาน"
                                 className="w-full rounded-md border border-gray-300 bg-amber-50 p-2"
@@ -39,33 +128,35 @@ export default function Page() {
                                 ป้อนรายละเอียดงาน
                             </h3>
 
-                            <textarea rows={5} className="w-full resize-y rounded-md border border-gray-300 bg-amber-50 p-2" placeholder="รายละเอียดงาน"></textarea>
+                            <textarea value={detail} onChange={(event) => setDetail(event.target.value)} rows={5} className="w-full resize-y rounded-md border border-gray-300 bg-amber-50 p-2" placeholder="รายละเอียดงาน"></textarea>
 
                             <h3 className="mt-5 mb-2">
                                 เลือกรูป
                             </h3>
 
-                            <input type="file" id="selectImageFile" className="hidden" />
+                            <input type="file" id="selectImageFile" onChange={handleImageChange} className="hidden" accept="image/*" />
                             <label htmlFor="selectImageFile" className="block w-full rounded-md border border-gray-300 bg-amber-50 p-2 text-center transition-colors duration-300 hover:cursor-pointer hover:bg-blue-500 hover:text-white">
                                 เลือกรูป
                             </label>
 
+                            {imagePreview && <Image src={imagePreview} alt="Preview" width={100} height={100} className="mt-3 h-24 w-24 rounded object-cover" />}
+
                             <h3 className="mt-5 mb-2">
                                 สถานะงาน
                             </h3>
-                            <select className="w-full rounded-md border border-gray-300 bg-amber-50 p-2">
+                            <select value={isCompleted ? '1' : '0'} onChange={(event) => setIsCompleted(event.target.value === '1')} className="w-full rounded-md border border-gray-300 bg-amber-50 p-2">
                                 <option value="1">เสร็จสิ้น</option>
                                 <option value="0">
                                     รอดำเนินการ
                                 </option>
                             </select>
 
-                            <button className="mt-5 rounded-md bg-blue-500 px-4 py-2 text-white transition-colors duration-300 hover:bg-blue-600">
+                            <button onClick={handleUpdateTask} className="mt-5 rounded-md bg-blue-500 px-4 py-2 text-white transition-colors duration-300 hover:bg-blue-600">
                                 บันทึกแก้ไขเพิ่มเติม
                             </button>
 
                             
-                            <button className="mt-5 rounded-md bg-red-500 px-4 py-2 text-white transition-colors duration-300 hover:bg-red-600">
+                            <button onClick={handleResetData} className="mt-5 rounded-md bg-red-500 px-4 py-2 text-white transition-colors duration-300 hover:bg-red-600">
                                 รีเซ็ตข้อมูล
                             </button>
 
@@ -84,4 +175,12 @@ export default function Page() {
             </div>
         </div>
     );
+}
+
+export default function Page() {
+    return (
+        <Suspense fallback={<div className="p-8 text-center">กำลังโหลดข้อมูล...</div>}>
+            <EditTaskPage />
+        </Suspense>
+    )
 }
